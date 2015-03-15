@@ -547,6 +547,34 @@ bool MDSMonitor::prepare_beacon(MMDSBeacon *m)
         m->put();
         return false;
       }
+    } else if (state == MDSMap::STATE_DAMAGED) {
+      if (!mon->osdmon()->is_writeable()) {
+        dout(4) << __func__ << ": DAMAGED from rank " << info.rank
+                << " waiting for osdmon writeable to blacklist it" << dendl;
+        mon->osdmon()->wait_for_writeable(new C_RetryMessage(this, m));
+        return false;
+      }
+
+      dout(4) << __func__ << ": marking rank "
+              << info.rank << " damaged" << dendl;
+      // Record this MDS rank as damaged, so that other daemons
+      // won't try to run it.
+      pending_mdsmap.up.erase(info.rank);
+      const utime_t until = ceph_clock_now(g_ceph_context);
+      pending_mdsmap.last_failure_osd_epoch = mon->osdmon()->blacklist(
+          info.addr, until);
+      pending_mdsmap.damaged.insert(info.rank);
+      pending_mdsmap.mds_info.erase(gid);  // last! info is a ref into this map
+      last_beacon.erase(gid);
+
+      // Respond to MDS as well as proposing, so that it knows it can
+      // continue to shut down
+      mon->send_reply(m,
+		  new MMDSBeacon(mon->monmap->fsid, m->get_global_id(),
+                    m->get_name(), mdsmap.get_epoch(), state, seq));
+
+      // We called blacklist() so we must propose on the OSDMap
+      request_proposal(mon->osdmon());
     } else {
       info.state = state;
       info.state_seq = seq;
