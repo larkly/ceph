@@ -102,7 +102,7 @@ public:
     STATE_STOPPING  =  CEPH_MDS_STATE_STOPPING,       // up, exporting metadata (-> standby or out)
     STATE_DNE       =  CEPH_MDS_STATE_DNE,             // down, rank does not exist
 
-    // State which a daemon may indicate to MDSMonitor in its beacon
+    // State which a daemon may send to MDSMonitor in its beacon
     // to indicate that offline repair is required.  Daemon must stop
     // immediately after indicating this state.
     STATE_DAMAGED   = CEPH_MDS_STATE_DAMAGED
