@@ -2337,11 +2337,11 @@ void MDS::damaged()
 {
   set_want_state(MDSMap::STATE_DAMAGED);
   beacon.notify_health(this);  // Include latest status in our swan song
-  beacon.send();
+  beacon.send_and_wait(g_conf->mds_mon_shutdown_timeout);
 
-  // Don't wait for messages to mon to be sent before committing suicide:
-  // safe because if mon is unavailable, another daemon will eventually
-  // take the rank and report DAMAGED again when it hits same problem we did.
+  // It's okay if we timed out and the mon didn't get our beacon, because
+  // another daemon (or ourselves after respawn) will eventually take the
+  // rank and report DAMAGED again when it hits same problem we did.
 
   respawn();  // Respawn into standby in case mon has other work for us
 }
