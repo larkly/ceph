@@ -564,7 +564,9 @@ bool MDSMonitor::prepare_beacon(MMDSBeacon *m)
       pending_mdsmap.last_failure_osd_epoch = mon->osdmon()->blacklist(
           info.addr, until);
       pending_mdsmap.damaged.insert(info.rank);
-      pending_mdsmap.mds_info.erase(gid);  // last! info is a ref into this map
+      // Call erase() last because the `info` reference becomes invalid
+      // after we remove the instance from the map.
+      pending_mdsmap.mds_info.erase(gid);
       last_beacon.erase(gid);
 
       // Respond to MDS as well as proposing, so that it knows it can
