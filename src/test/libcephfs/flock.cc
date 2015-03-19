@@ -53,9 +53,8 @@
 static const mode_t fileMode = S_IRWXU | S_IRWXG | S_IRWXO;
 
 // Default wait time for normal and "slow" operations
-// (5" should be enough in case of network congestion)
-static const long waitMs = 10;
-static const long waitSlowMs = 5000;
+static const long waitMs = 1 * 1000;
+static const long waitSlowMs = 30 * 1000;
 
 // Get the absolute struct timespec reference from now + 'ms' milliseconds
 static const struct timespec* abstime(struct timespec &ts, long ms) {
@@ -377,15 +376,9 @@ TEST(LibCephFS, ThreesomeLocking) {
 
 /* Locking in different processes */
 
-#define PROCESS_SLOW_MS() \
-  static const long waitMs = 100; \
-  (void) waitMs
-
 // Used by ConcurrentLocking test
 static void process_ConcurrentLocking(str_ConcurrentLocking& s) {
   const pid_t mypid = getpid();
-  PROCESS_SLOW_MS();
-
   struct ceph_mount_info *cmount = NULL;
   struct timespec ts;
 
@@ -427,7 +420,6 @@ static void process_ConcurrentLocking(str_ConcurrentLocking& s) {
 }
 
 TEST(LibCephFS, InterProcessLocking) {
-  PROCESS_SLOW_MS();
   // Process synchronization
   char c_file[1024];
   const pid_t mypid = getpid();
@@ -526,7 +518,6 @@ TEST(LibCephFS, InterProcessLocking) {
 }
 
 TEST(LibCephFS, ThreesomeInterProcessLocking) {
-  PROCESS_SLOW_MS();
   // Process synchronization
   char c_file[1024];
   const pid_t mypid = getpid();
